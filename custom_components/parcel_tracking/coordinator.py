@@ -1,4 +1,4 @@
-"""Paket-Tracking DataUpdateCoordinator."""
+ """Paket-Tracking DataUpdateCoordinator."""
 from __future__ import annotations
 
 import base64
@@ -38,8 +38,8 @@ def detect_carrier(tracking_number: str) -> str:
         return CARRIER_DHL
     if num.startswith("JJD"):
         return CARRIER_DHL
-    # DPD: 14-stellig, beginnt mit 0
-    if num.isdigit() and len(num) == 14 and num.startswith("0"):
+    # DPD: 14-stellig (kann mit beliebiger Ziffer beginnen)
+    if num.isdigit() and len(num) == 14:
         return CARRIER_DPD
     return CARRIER_DHL
 
@@ -275,9 +275,6 @@ class DhlTrackingCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     (data.get("status") or "")).lower()
         code = self._status_code(combined)
         _LOGGER.debug("DPD: %d Events, Status=%s", len(events), code)
-        _LOGGER.debug("DPD raw response keys: %s", list(data.keys()))
-        _LOGGER.debug("DPD first event: %s", events[0] if events else "none")
-        _LOGGER.debug("DPD combined text: %s", combined)
 
         status_obj: dict[str, Any] = {
             "status":      code,
