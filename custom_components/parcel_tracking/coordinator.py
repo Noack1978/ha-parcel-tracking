@@ -11,7 +11,7 @@ from typing import Any
 import aiohttp
 
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.aiohttp_client import async_get_clientsession, async_create_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
@@ -96,8 +96,6 @@ class DhlTrackingCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                         data[number] = await self._fetch_dpd(session, number)
                     else:
                         data[number] = await self._fetch_dhl_website(session, number)
-            except UpdateFailed:
-                raise
             except Exception as err:  # noqa: BLE001
                 _LOGGER.warning("Fehler bei %s: %s", number, err)
                 data[number] = {"_error": str(err)}
@@ -217,19 +215,20 @@ class DhlTrackingCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         headers = {
             "Accept":          "application/json, text/plain, */*",
             "Accept-Language": "de-DE,de;q=0.9,en;q=0.8",
-            "Accept-Encoding": "gzip, deflate, br",
             "User-Agent":      "Mozilla/5.0 (Linux; Android 13; Pixel 7) "
                                "AppleWebKit/537.36 (KHTML, like Gecko) "
                                "Chrome/120.0.0.0 Mobile Safari/537.36",
             "Referer":         "https://tracking.dpd.de/",
             "Origin":          "https://tracking.dpd.de",
-            "Connection":      "keep-alive",
         }
         _LOGGER.debug("DPD Website-API: %s", tracking_number)
+        # Eigene Session fuer DPD – shared HA-Session wird von DPD blockiert
+        dpd_session = async_create_clientsession(self.hass)
         try:
-            async with session.get(
+            async with dpd_session.get(
                 url, headers=headers,
                 timeout=aiohttp.ClientTimeout(total=API_TIMEOUT),
+                ssl=False,
             ) as resp:
                 if resp.status == 404:
                     return {"status": {"status": "not-found",
@@ -238,9 +237,12 @@ class DhlTrackingCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 if resp.status != 200:
                     return {"_error": f"http_{resp.status}"}
                 result = await resp.json(content_type=None)
-                _LOGGER.debug("DPD Antwort komplett: %s", result)
+                _LOGGER.debug("DPD Antwort: %s", str(result)[:300])
         except aiohttp.ClientError as err:
-            raise UpdateFailed(f"DPD Verbindungsfehler: {err}") from err
+            _LOGGER.warning("DPD Verbindungsfehler: %s", err)
+            return {"_error": f"dpd_connection: {err}"}
+        finally:
+            await dpd_session.close()
         parsed = self._parse_dpd(result, tracking_number)
         parsed["_carrier"] = CARRIER_DPD
         return parsed
