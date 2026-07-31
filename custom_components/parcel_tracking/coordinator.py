@@ -232,7 +232,7 @@ class DhlTrackingCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 if resp.status != 200:
                     return {"_error": f"http_{resp.status}"}
                 result = await resp.json(content_type=None)
-                _LOGGER.debug("DPD Antwort: %s", str(result)[:300])
+                _LOGGER.debug("DPD Antwort komplett: %s", result)
         except aiohttp.ClientError as err:
             raise UpdateFailed(f"DPD Verbindungsfehler: {err}") from err
         parsed = self._parse_dpd(result, tracking_number)
@@ -275,6 +275,9 @@ class DhlTrackingCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     (data.get("status") or "")).lower()
         code = self._status_code(combined)
         _LOGGER.debug("DPD: %d Events, Status=%s", len(events), code)
+        _LOGGER.debug("DPD raw response keys: %s", list(data.keys()))
+        _LOGGER.debug("DPD first event: %s", events[0] if events else "none")
+        _LOGGER.debug("DPD combined text: %s", combined)
 
         status_obj: dict[str, Any] = {
             "status":      code,
