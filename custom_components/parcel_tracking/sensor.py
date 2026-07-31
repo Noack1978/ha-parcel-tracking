@@ -1,4 +1,4 @@
-"""Paket-Tracking Sensor-Plattform."""
+"""DHL Tracking Sensor-Plattform."""
 from __future__ import annotations
 
 import logging
@@ -117,11 +117,6 @@ class DhlShipmentSensor(CoordinatorEntity[DhlTrackingCoordinator], SensorEntity)
             attrs["error"] = data.get("_error", "no_data") if data else "no_data"
             return attrs
 
-        # Carrier aus Integration-Einstellungen
-        carriers = self._config_entry.options.get("carriers", {})
-        if self._tracking_number in carriers:
-            attrs["carrier"] = carriers[self._tracking_number]
-
 
         # Status
         status = data.get("status", {})
@@ -183,7 +178,7 @@ class DhlShipmentSensor(CoordinatorEntity[DhlTrackingCoordinator], SensorEntity)
     def device_info(self) -> dict[str, Any]:
         return {
             "identifiers": {(DOMAIN, self._config_entry.entry_id)},
-            "name": "Paket-Sendungsverfolgung",
+            "name": "DHL Sendungsverfolgung",
             "manufacturer": "DHL Group",
             "model": "Parcel DE Tracking API" if self._config_entry.data.get("api_type") == "parcel_de" else "Shipment Tracking – Unified API",
             "configuration_url": "https://developer.dhl.com",
@@ -253,7 +248,7 @@ class DhlArchiveSensor(SensorEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
-            "name": "Paket-Sendungsverfolgung",
+            "name": "DHL Sendungsverfolgung",
             "manufacturer": "DHL Group",
             "model": "Parcel DE Tracking API",
         }

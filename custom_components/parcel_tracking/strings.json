@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Paket-Sendungsverfolgung einrichten",
+        "title": "DHL Sendungsverfolgung einrichten",
         "description": "Fuer den normalen Betrieb mit 'Parcel DE Tracking' sind keine Zugangsdaten erforderlich - einfach leer lassen und speichern. API-Key und Secret werden nur benoetigt fuer: Sandbox-Modus oder Shipment Tracking Unified API.",
         "data": {
           "api_key": "API-Schluessel (nur fuer Sandbox / Unified API)",
@@ -25,13 +25,13 @@
       "api_key_required": "API-Schluessel ist erforderlich fuer Sandbox-Modus und Unified API"
     },
     "abort": {
-      "already_configured": "Paket-Sendungsverfolgung ist bereits konfiguriert"
+      "already_configured": "DHL Sendungsverfolgung ist bereits konfiguriert"
     }
   },
   "options": {
     "step": {
       "menu": {
-        "title": "Paket-Sendungsverfolgung",
+        "title": "DHL Sendungsverfolgung",
         "menu_options": {
           "add_tracking": "Sendung hinzufuegen",
           "manage_trackings": "Sendungen verwalten / entfernen",

@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
 _LOGGER = logging.getLogger(__name__)
-STORAGE_KEY     = "parcel_tracking.archive"
+STORAGE_KEY     = "dhl_tracking.archive"
 STORAGE_VERSION = 1
 
 

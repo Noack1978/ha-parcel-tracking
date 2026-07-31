@@ -20,7 +20,7 @@ add_tracking:
       description: Nur erforderlich, wenn mehrere DHL-Instanzen konfiguriert sind
       selector:
         config_entry:
-          integration: parcel_tracking
+          integration: dhl_tracking
 
 remove_tracking:
   name: Sendung entfernen
@@ -37,7 +37,7 @@ remove_tracking:
       description: Nur erforderlich, wenn mehrere DHL-Instanzen konfiguriert sind
       selector:
         config_entry:
-          integration: parcel_tracking
+          integration: dhl_tracking
 
 refresh:
   name: Sofort aktualisieren
@@ -48,4 +48,4 @@ refresh:
       description: Nur erforderlich, wenn mehrere DHL-Instanzen konfiguriert sind
       selector:
         config_entry:
-          integration: parcel_tracking
+          integration: dhl_tracking

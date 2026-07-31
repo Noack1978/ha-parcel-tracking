@@ -1,4 +1,4 @@
-"""Paket-Tracking DataUpdateCoordinator."""
+"""DHL Tracking DataUpdateCoordinator."""
 from __future__ import annotations
 
 import base64
@@ -49,8 +49,7 @@ class DhlTrackingCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.sandbox    = sandbox
         self.tracking_numbers = tracking_numbers
         self.postal_codes     = postal_codes
-        self.carriers:  dict[str, str] = {}
-        self.labels:    dict[str, str] = {}
+        self.labels:  dict[str, str] = {}
 
         if api_type != API_TYPE_PARCEL_DE:
             self._unified_url = UNIFIED_API_SANDBOX_URL if sandbox else UNIFIED_API_URL
@@ -77,6 +76,8 @@ class DhlTrackingCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     )
                 else:
                     data[number] = await self._fetch_dhl_website(session, number)
+            except UpdateFailed:
+                raise
             except Exception as err:  # noqa: BLE001
                 _LOGGER.warning("Fehler bei %s: %s", number, err)
                 data[number] = {"_error": str(err)}
@@ -96,7 +97,7 @@ class DhlTrackingCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             label = self.labels.get(number, number)
             _LOGGER.info("DHL Status-Event: %s -> %s (%s)", number, new_status, label)
             self.hass.bus.async_fire(
-                "parcel_tracking_status_changed",
+                "dhl_tracking_status_changed",
                 {
                     "tracking_number": number,
                     "label":           label,
