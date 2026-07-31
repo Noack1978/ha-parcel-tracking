@@ -8,13 +8,9 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_registry as er
 from .const import (
     API_TYPE_PARCEL_DE,
-    CARRIER_DHL,
-    CARRIER_DHL,
-    CARRIER_DPD,
     CONF_API_KEY,
     CONF_API_SECRET,
     CONF_API_TYPE,
-    CONF_CARRIERS,
     CONF_IMAP_ENABLED,
     CONF_LABELS,
     CONF_POSTAL_CODES,
@@ -28,7 +24,7 @@ from .const import (
 from datetime import timedelta
 from homeassistant.helpers.event import async_track_time_interval
 from .archive_store import DhlArchiveStore
-from .coordinator import DhlTrackingCoordinator, detect_carrier
+from .coordinator import DhlTrackingCoordinator
 from .imap_scanner import DhlImapScanner
 
 from pathlib import Path
@@ -68,7 +64,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         sandbox=entry.data.get(CONF_SANDBOX, False),
     )
     coordinator.labels   = dict(entry.options.get(CONF_LABELS, {}))
-    coordinator.carriers = dict(entry.options.get(CONF_CARRIERS, {}))
     if entry.options.get(CONF_TRACKING_NUMBERS):
         await coordinator.async_config_entry_first_refresh()
     hass.data[DOMAIN][entry.entry_id] = coordinator
@@ -232,7 +227,6 @@ def _async_register_services(hass: HomeAssistant) -> None:
             CONF_TRACKING_NUMBERS: [n for n in entry.options.get(CONF_TRACKING_NUMBERS, []) if n != number],
             CONF_LABELS:      {k: v for k, v in entry.options.get(CONF_LABELS, {}).items() if k != number},
             CONF_POSTAL_CODES:{k: v for k, v in entry.options.get(CONF_POSTAL_CODES, {}).items() if k != number},
-            CONF_CARRIERS:    {k: v for k, v in entry.options.get(CONF_CARRIERS, {}).items() if k != number},
         })
         await hass.config_entries.async_reload(entry.entry_id)
 
@@ -292,7 +286,6 @@ def _async_register_services(hass: HomeAssistant) -> None:
             vol.Required("tracking_number"): cv.string,
             vol.Optional("label",       default=""): cv.string,
             vol.Optional("postal_code", default=""): cv.string,
-            vol.Optional("carrier",     default=""): cv.string,
             vol.Optional("entry_id"):   cv.string,
         }))
     hass.services.async_register(DOMAIN, "remove_tracking", handle_remove_tracking,

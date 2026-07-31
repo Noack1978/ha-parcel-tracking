@@ -11,14 +11,11 @@ from typing import Any
 import aiohttp
 
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.aiohttp_client import async_get_clientsession, async_create_clientsession
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
     API_TIMEOUT,
-    CARRIER_DHL,
-    CARRIER_DPD,
-    DPD_WEBSITE_API_URL,
     API_TYPE_PARCEL_DE,
     DHL_WEBSITE_API_URL,
     DOMAIN,
@@ -30,18 +27,6 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
-
-
-def detect_carrier(tracking_number: str) -> str:
-    num = tracking_number.upper()
-    if num.startswith("00") and len(num) == 20:
-        return CARRIER_DHL
-    if num.startswith("JJD"):
-        return CARRIER_DHL
-    # DPD: 14-stellig (kann mit beliebiger Ziffer beginnen)
-    if num.isdigit() and len(num) == 14:
-        return CARRIER_DPD
-    return CARRIER_DHL
 
 
 class DhlTrackingCoordinator(DataUpdateCoordinator[dict[str, Any]]):
@@ -91,11 +76,7 @@ class DhlTrackingCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                         session, number, self.postal_codes.get(number, "")
                     )
                 else:
-                    carrier = self.carriers.get(number) or detect_carrier(number)
-                    if carrier == CARRIER_DPD:
-                        data[number] = await self._fetch_dpd(session, number)
-                    else:
-                        data[number] = await self._fetch_dhl_website(session, number)
+                    data[number] = await self._fetch_dhl_website(session, number)
             except Exception as err:  # noqa: BLE001
                 _LOGGER.warning("Fehler bei %s: %s", number, err)
                 data[number] = {"_error": str(err)}
@@ -205,96 +186,6 @@ class DhlTrackingCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return result
 
     # ── Sandbox (DASS-XML-API) ────────────────────────────────────────────────
-
-    # ── DPD Website-API ─────────────────────────────────────────────────────
-
-    async def _fetch_dpd(
-        self, session: aiohttp.ClientSession, tracking_number: str
-    ) -> dict[str, Any]:
-        url = f"{DPD_WEBSITE_API_URL}/{tracking_number}"
-        headers = {
-            "Accept":          "application/json, text/plain, */*",
-            "Accept-Language": "de-DE,de;q=0.9,en;q=0.8",
-            "User-Agent":      "Mozilla/5.0 (Linux; Android 13; Pixel 7) "
-                               "AppleWebKit/537.36 (KHTML, like Gecko) "
-                               "Chrome/120.0.0.0 Mobile Safari/537.36",
-            "Referer":         "https://tracking.dpd.de/",
-            "Origin":          "https://tracking.dpd.de",
-        }
-        _LOGGER.debug("DPD Website-API: %s", tracking_number)
-        # Eigene Session fuer DPD – shared HA-Session wird von DPD blockiert
-        dpd_session = async_create_clientsession(self.hass)
-        try:
-            async with dpd_session.get(
-                url, headers=headers,
-                timeout=aiohttp.ClientTimeout(total=API_TIMEOUT),
-                ssl=False,
-            ) as resp:
-                if resp.status == 404:
-                    return {"status": {"status": "not-found",
-                                       "description": "DPD Sendung nicht gefunden"},
-                            "events": [], "_carrier": CARRIER_DPD}
-                if resp.status != 200:
-                    return {"_error": f"http_{resp.status}"}
-                result = await resp.json(content_type=None)
-                _LOGGER.debug("DPD Antwort: %s", str(result)[:300])
-        except aiohttp.ClientError as err:
-            _LOGGER.warning("DPD Verbindungsfehler: %s", err)
-            return {"_error": f"dpd_connection: {err}"}
-        finally:
-            await dpd_session.close()
-        parsed = self._parse_dpd(result, tracking_number)
-        parsed["_carrier"] = CARRIER_DPD
-        return parsed
-
-    def _parse_dpd(self, data: dict, tracking_number: str) -> dict[str, Any]:
-        lifecycle = (data.get("parcellifecycleResponse") or
-                     data.get("parcelLifecycleResponse") or data)
-        plc_data  = (lifecycle.get("parcelLifeCycleData") or
-                     lifecycle.get("parcellifecycledata") or lifecycle)
-        scan_info = plc_data.get("scanInfo") or plc_data.get("scaninfo") or {}
-        scans     = scan_info.get("scan") or scan_info.get("Scan") or []
-        if not scans:
-            scans = data.get("scans") or data.get("events") or []
-
-        events: list[dict[str, Any]] = []
-        for scan in scans:
-            if isinstance(scan, dict):
-                date = scan.get("date") or scan.get("scanDate", "")
-                time = scan.get("time") or scan.get("scanTime", "")
-                ts   = f"{date}T{time}" if date and time else (date or time or "")
-                entry: dict[str, Any] = {
-                    "description": (scan.get("description") or
-                                    scan.get("scanDescription") or
-                                    scan.get("label") or ""),
-                    "location":    (scan.get("city") or
-                                    scan.get("depotCity") or
-                                    scan.get("location") or ""),
-                }
-                if ts:
-                    entry["timestamp"] = ts
-                events.append(entry)
-
-        events = list(reversed(events))
-        etd    = (plc_data.get("plannedDeliveryDate") or
-                  plc_data.get("deliveryDate") or "")
-        first    = events[0] if events else {}
-        combined = (first.get("description", "") + " " +
-                    (data.get("status") or "")).lower()
-        code = self._status_code(combined)
-        _LOGGER.debug("DPD: %d Events, Status=%s", len(events), code)
-
-        status_obj: dict[str, Any] = {
-            "status":      code,
-            "description": first.get("description", ""),
-            "timestamp":   first.get("timestamp", ""),
-        }
-        if first.get("location"):
-            status_obj["location"] = {"address": {"addressLocality": first["location"]}}
-        result: dict[str, Any] = {"status": status_obj, "events": events}
-        if etd:
-            result["estimatedTimeOfDelivery"] = str(etd)
-        return result
 
     def _build_basic_auth(self) -> str:
         return "Basic " + base64.b64encode(

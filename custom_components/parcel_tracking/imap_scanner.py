@@ -1,4 +1,4 @@
-"""IMAP-Scanner: Erkennt DHL- und DPD-Sendungsnummern aus E-Mails."""
+"""IMAP-Scanner: Erkennt DHL-Sendungsnummern aus E-Mails."""
 from __future__ import annotations
 
 import base64
@@ -15,7 +15,6 @@ from homeassistant.helpers.event import async_track_time_interval
 
 from .const import (
     CARRIER_DHL,
-    CARRIER_DPD,
     CONF_IMAP_FOLDER,
     CONF_IMAP_PASSWORD,
     CONF_IMAP_PORT,
@@ -27,7 +26,6 @@ from .const import (
     DEFAULT_IMAP_SCAN_INTERVAL,
     DHL_SENDERS,
     DHL_TRACKING_PATTERNS,
-    DPD_URL_PATTERN,
     DOMAIN,
 )
 
@@ -43,10 +41,6 @@ _DHL_PIECECODE_RE = re.compile(r"piececode=([A-Z0-9]{5,30})", re.IGNORECASE)
 _DHL_NUMBER_RE = re.compile(
     r"\b(?:" + "|".join(DHL_TRACKING_PATTERNS) + r")\b", re.IGNORECASE
 )
-
-# DPD: Sendungsnummer aus Tracking-URL (alle E-Mails, nicht nur DPD-Absender!)
-# Beispiel: https://tracking.dpd.de/status/de_DE/parcel/05025034752023
-_DPD_URL_RE = re.compile(DPD_URL_PATTERN, re.IGNORECASE)
 
 _MAX_AUTH_FAILURES = 3
 
@@ -119,20 +113,11 @@ def _extract_all(text: str) -> list[dict[str, str]]:
     """Extrahiert alle Sendungsnummern mit Carrier-Zuordnung.
 
     Strategie:
-    1. DPD-URLs (tracking.dpd.de) aus ALLEN E-Mails
     2. DHL piececode= URLs aus ALLEN E-Mails
     3. DHL-Regex nur wenn die E-Mail von DHL kommt (vermeidet false positives)
     """
     found: list[dict[str, str]] = []
     seen: set[str] = set()
-
-    # DPD via URL – funktioniert auch bei Haendler-E-Mails
-    for m in _DPD_URL_RE.finditer(text):
-        num = m.group(1).upper()
-        if num not in seen:
-            seen.add(num)
-            found.append({"number": num, "carrier": CARRIER_DPD})
-            _LOGGER.debug("IMAP: DPD-Nummer aus URL: %s", num)
 
     # DHL via piececode= URL
     for m in _DHL_PIECECODE_RE.finditer(text):
@@ -175,7 +160,7 @@ def _imap_login(mail: imaplib.IMAP4, username: str, password: str) -> None:
 
 
 class DhlImapScanner:
-    """Scannt IMAP-Postfach nach DHL- und DPD-Sendungsnummern."""
+    """Scannt IMAP-Postfach nach DHL-Sendungsnummern."""
 
     def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry) -> None:
         self._hass   = hass
@@ -287,7 +272,7 @@ class DhlImapScanner:
                             sender = _extract_sender_from_subject(subject)
                             _LOGGER.debug("IMAP Betreff: %s | Erkannter Sender: %s", subject, sender)
 
-                            # 1. DPD + DHL via URL (alle E-Mails)
+                            # 1. DHL via URL (alle E-Mails)
                             url_results = _extract_all(full_text)
                             if url_results:
                                 for item in url_results:

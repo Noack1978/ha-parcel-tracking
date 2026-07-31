@@ -121,15 +121,8 @@ STATUS_ICONS: dict[str, str] = {
 DEFAULT_ICON = "mdi:package-variant-closed"
 
 # Carrier-Erkennung
-CONF_CARRIERS = "carriers"
-CARRIER_DHL   = "dhl"
-CARRIER_DPD   = "dpd"
 
-# DPD Website-API (kein API-Key noetig)
-DPD_WEBSITE_API_URL = "https://tracking.dpd.de/rest/plc/de_DE"
 
-# DPD URL-Muster in E-Mails von Haendlern
-DPD_URL_PATTERN = r"tracking\.dpd\.de/[^\s]*?/parcel/([A-Z0-9]{8,20})"
 
 # Archiv
 CONF_ARCHIVE_DAYS     = "archive_days"
@@ -138,13 +131,5 @@ CONF_NOTIFY_TARGET    = "notify_target"
 DEFAULT_ARCHIVE_DAYS  = 30
 ARCHIVE_KEY = f"{DOMAIN}_archive"
 
-# Multi-Carrier
-CARRIER_DHL    = "dhl"
-CARRIER_DPD    = "dpd"
-CONF_CARRIERS  = "carriers"
 
-# DPD Website-API (kein API-Key noetig)
-DPD_WEBSITE_API_URL = "https://tracking.dpd.de/rest/plc/de_DE"
 
-# DPD URL-Muster in E-Mails von Haendlern
-DPD_URL_PATTERN = r"tracking\.dpd\.de/[^\s\"']*?/parcel/([A-Z0-9]{8,20})"
