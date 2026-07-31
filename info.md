@@ -1,18 +1,17 @@
-# DHL Sendungsverfolgung
+# Paket-Sendungsverfolgung
 
-Verfolge DHL-Pakete direkt in Home Assistant.
+Verfolge DHL- und DPD-Pakete direkt in Home Assistant – inklusive Lovelace-Karte.
 
 ## Was du bekommst
 
+- **DHL & DPD** Sendungsverfolgung ohne API-Key
 - Ein **Sensor pro Sendung** mit Status, Ort, Lieferdatum und Ereignis-Historie
-- **Absendername** wird automatisch aus der DHL-API gelesen
+- **Lovelace-Karte** wird automatisch installiert
+- **Absendername** automatisch aus E-Mail-Betreff
 - **E-Mail-Scanner** erkennt neue Sendungen automatisch
 - **Sendungsarchiv** fuer zugestellte Pakete
-- **Services** zum Hinzufuegen/Entfernen/Archivieren (auch per Automation)
-- Volle **UI-Konfiguration** ohne YAML
+- **Events** bei Statuswechsel fuer einfache Automationen
 
 ## Voraussetzungen
 
-**Kein Developer-Account noetig** – im Produktivbetrieb wird die DHL-Website-API verwendet.
-
-Optional fuer Sandbox/Unified API: kostenloser Account auf [developer.dhl.com](https://developer.dhl.com)
+Kein Developer-Account noetig – nutzt die oeffentlichen Website-APIs von DHL und DPD.
