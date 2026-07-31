@@ -1,4 +1,4 @@
-"""Config Flow fuer DHL Sendungsverfolgung."""
+"""Config Flow fuer Paket-Sendungsverfolgung."""
 from __future__ import annotations
 
 import base64
@@ -124,7 +124,7 @@ class DhlTrackingConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = error
             else:
                 return self.async_create_entry(
-                    title="DHL Sendungsverfolgung",
+                    title="Paket-Sendungsverfolgung",
                     data={
                         CONF_API_KEY:    user_input[CONF_API_KEY],
                         CONF_API_SECRET: user_input.get(CONF_API_SECRET, ""),

@@ -1,19 +1,21 @@
 {
-  "domain": "dhl_tracking",
-  "name": "DHL Sendungsverfolgung",
+  "domain": "parcel_tracking",
+  "name": "Paket-Sendungsverfolgung",
   "codeowners": [
     "@Noack1978"
   ],
   "config_flow": true,
-  "dependencies": [],
-  "documentation": "https://github.com/Noack1978/ha-dhl-tracking",
+  "dependencies": [
+    "http"
+  ],
+  "documentation": "https://github.com/Noack1978/ha-parcel-tracking",
   "homeassistant": "2024.1.0",
   "integration_type": "service",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/Noack1978/ha-dhl-tracking/issues",
+  "issue_tracker": "https://github.com/Noack1978/ha-parcel-tracking/issues",
   "loggers": [
-    "custom_components.dhl_tracking"
+    "custom_components.parcel_tracking"
   ],
   "requirements": [],
-  "version": "1.3.5"
+  "version": "1.0.3"
 }

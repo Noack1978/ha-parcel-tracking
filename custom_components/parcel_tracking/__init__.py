@@ -1,4 +1,4 @@
-"""DHL Sendungsverfolgung - Home Assistant Custom Integration."""
+"""Paket-Sendungsverfolgung - Home Assistant Custom Integration."""
 from __future__ import annotations
 import logging
 import voluptuous as vol
@@ -8,7 +8,6 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_registry as er
 from .const import (
     API_TYPE_PARCEL_DE,
-    CARRIER_DHL,
     CONF_API_KEY,
     CONF_API_SECRET,
     CONF_API_TYPE,
@@ -27,6 +26,12 @@ from homeassistant.helpers.event import async_track_time_interval
 from .archive_store import DhlArchiveStore
 from .coordinator import DhlTrackingCoordinator
 from .imap_scanner import DhlImapScanner
+
+from pathlib import Path
+from homeassistant.components.http import StaticPathConfig
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
+from homeassistant.core import CoreState, callback
+from homeassistant.helpers.storage import Store
 from .const import (
     ARCHIVE_KEY,
     CONF_ARCHIVE_DAYS,
@@ -58,7 +63,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         scan_interval=entry.options.get(CONF_UPDATE_INTERVAL, DEFAULT_SCAN_INTERVAL),
         sandbox=entry.data.get(CONF_SANDBOX, False),
     )
-    coordinator.labels = dict(entry.options.get(CONF_LABELS, {}))
+    coordinator.labels   = dict(entry.options.get(CONF_LABELS, {}))
     if entry.options.get(CONF_TRACKING_NUMBERS):
         await coordinator.async_config_entry_first_refresh()
     hass.data[DOMAIN][entry.entry_id] = coordinator
@@ -66,6 +71,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     entry.async_on_unload(entry.add_update_listener(_async_update_options))
 
     _async_register_services(hass)
+    _async_register_card(hass)
     await _async_start_imap_scanner(hass, entry)
     _async_start_reminder(hass, entry)
     return True
@@ -83,6 +89,32 @@ async def _async_stop_imap_scanner(hass: HomeAssistant, entry_id: str) -> None:
     scanner = hass.data.get(IMAP_SCANNER_KEY, {}).pop(entry_id, None)
     if scanner:
         await scanner.async_stop()
+
+
+@callback
+def _async_register_card(hass) -> None:
+    STATIC_URL = "/parcel_tracking/parcel-tracking-card.js"
+    JS_PATH    = Path(__file__).parent / "frontend" / "parcel-tracking-card.js"
+
+    async def _register(_event=None):
+        await hass.http.async_register_static_paths([
+            StaticPathConfig(STATIC_URL, str(JS_PATH), cache_headers=False)
+        ])
+        store = Store(hass, 1, "lovelace_resources")
+        data  = await store.async_load() or {"items": [], "deleted_items": []}
+        if not any(r.get("url") == STATIC_URL for r in data.get("items", [])):
+            data.setdefault("items", []).append({
+                "id":   "parcel_tracking_card",
+                "type": "module",
+                "url":  STATIC_URL,
+            })
+            await store.async_save(data)
+            _LOGGER.info("Parcel-Tracking-Karte als Lovelace-Ressource registriert.")
+
+    if hass.state is CoreState.running:
+        hass.async_create_task(_register())
+    else:
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _register)
 
 
 def _async_start_reminder(hass: HomeAssistant, entry: ConfigEntry) -> None:
@@ -193,8 +225,8 @@ def _async_register_services(hass: HomeAssistant) -> None:
         hass.config_entries.async_update_entry(entry, options={
             **entry.options,
             CONF_TRACKING_NUMBERS: [n for n in entry.options.get(CONF_TRACKING_NUMBERS, []) if n != number],
-            CONF_LABELS:    {k: v for k, v in entry.options.get(CONF_LABELS, {}).items() if k != number},
-            CONF_POSTAL_CODES: {k: v for k, v in entry.options.get(CONF_POSTAL_CODES, {}).items() if k != number},
+            CONF_LABELS:      {k: v for k, v in entry.options.get(CONF_LABELS, {}).items() if k != number},
+            CONF_POSTAL_CODES:{k: v for k, v in entry.options.get(CONF_POSTAL_CODES, {}).items() if k != number},
         })
         await hass.config_entries.async_reload(entry.entry_id)
 
