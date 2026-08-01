@@ -4,18 +4,10 @@
 [![HA Version](https://img.shields.io/badge/Home%20Assistant-2024.1%2B-blue.svg)](https://www.home-assistant.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-DHL-Sendungsverfolgung fuer Home Assistant – inkl. Lovelace-Karte.
 
 ## Features
 
 - **DHL** Sendungsverfolgung (kein API-Key noetig)
-- Automatische Carrier-Erkennung
-- Lovelace-Karte wird **automatisch** installiert und registriert
-- E-Mail-Scanner erkennt DHL- und DPD-Sendungen (mehrere Ordner)
-- Absendername aus E-Mail-Betreff
-- Sendungsarchiv mit Erinnerungsfunktion
-- Event `parcel_tracking_status_changed` fuer Automationen
-- Umbenennen per Karte oder Service
 
 ## Installation via HACS
 

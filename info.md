@@ -1,6 +1,6 @@
 # Paket-Sendungsverfolgung
 
-Verfolge DHL-Pakete direkt in Home Assistant – inklusive Lovelace-Karte.
+Verfolge DHL- und DPD-Pakete direkt in Home Assistant – inklusive Lovelace-Karte.
 
 ## Was du bekommst
 
@@ -14,4 +14,4 @@ Verfolge DHL-Pakete direkt in Home Assistant – inklusive Lovelace-Karte.
 
 ## Voraussetzungen
 
-Kein Developer-Account noetig – nutzt die oeffentlichen Website-APIs von DHL.
+Kein Developer-Account noetig – nutzt die oeffentlichen Website-APIs von DHL und DPD.
