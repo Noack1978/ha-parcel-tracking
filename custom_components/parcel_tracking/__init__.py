@@ -97,9 +97,12 @@ def _async_register_card(hass) -> None:
     JS_PATH    = Path(__file__).parent / "frontend" / "parcel-tracking-card.js"
 
     async def _register(_event=None):
-        await hass.http.async_register_static_paths([
-            StaticPathConfig(STATIC_URL, str(JS_PATH), cache_headers=False)
-        ])
+        try:
+            await hass.http.async_register_static_paths([
+                StaticPathConfig(STATIC_URL, str(JS_PATH), cache_headers=False)
+            ])
+        except RuntimeError:
+            pass  # Route bereits registriert (z. B. nach Reload)
         store = Store(hass, 1, "lovelace_resources")
         data  = await store.async_load() or {"items": [], "deleted_items": []}
         if not any(r.get("url") == STATIC_URL for r in data.get("items", [])):
