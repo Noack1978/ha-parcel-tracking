@@ -409,7 +409,7 @@ class ParcelTrackingCard extends HTMLElement {
           <div class="dhl-badge">DHL</div>
           <div>
             <div class="header-title">Sendungsverfolgung</div>
-            <div class="header-subtitle">DHL &amp; DPD Sendungsverfolgung</div>
+            <div class="header-subtitle">Sendungsverfolgung</div>
           </div>
         </div>
 
@@ -864,6 +864,6 @@ window.customCards.push({
   type:        'parcel-tracking-card',
   name:        'Paket-Sendungsverfolgung',
   version:     '1.2.2',
-  description: 'Karte fuer DHL- und DPD-Sendungsverfolgung mit Ereignis-Timeline und Archiv.',
+  description: 'Karte zur Sendungsverfolgung mit Ereignis-Timeline und Archiv.',
   preview:     false,
 });
