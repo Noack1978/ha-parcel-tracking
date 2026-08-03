@@ -81,8 +81,8 @@ _SENDER_EXCLUDE = {
 _SENDER_PATTERNS = [
     # "Ihre shop-apotheke.com Sendung..." – mit TLD
     re.compile(r'([\w\-.]+\.(?:com|de|net|org|eu|shop|io|at|ch|fr|es)) +(?:Sendung|Paket|Bestellung)', re.IGNORECASE),
-    # "Ihre asambeauty Sendung..." – ohne TLD (Wort vor Sendung/Paket)
-    re.compile(r'Ihre +([\w\-]{4,}) +(?:Sendung|Paket|Bestellung)', re.IGNORECASE),
+    # "Ihre Body Attack GmbH Sendung..." – ein oder mehrere Woerter vor Sendung/Paket
+    re.compile(r'Ihre +(.{4,50}?) +(?:Sendung|Paket|Bestellung)', re.IGNORECASE),
     # "Sendung von shop.de", "Bestellung bei shop.de"
     re.compile(r'(?:sendung|paket|bestellung) +(?:von|bei) +([\w\-.]+\.(?:com|de|net|org|eu|shop|io|at|ch|fr|es))', re.IGNORECASE),
     # "Versand durch/von shop.de"
@@ -98,7 +98,9 @@ def _extract_sender_from_subject(subject: str) -> str:
         m = pattern.search(subject)
         if m:
             name = m.group(1).strip().rstrip(".,")
-            if len(name) > 3 and name.lower() not in _SENDER_EXCLUDE:
+            # Erstes Wort prüfen – mehrteilige Namen bleiben erhalten
+            first_word = name.split()[0].lower() if name.split() else ""
+            if len(name) > 3 and first_word not in _SENDER_EXCLUDE:
                 return name
     return ""
 
