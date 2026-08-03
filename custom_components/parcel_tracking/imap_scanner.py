@@ -211,8 +211,7 @@ class DhlImapScanner:
             for item in found:
                 number  = item["number"]
                 label   = item.get("label", "E-Mail Import")
-                _LOGGER.info("IMAP: %s-Sendung erkannt: %s (Label: %s)",
-                             carrier.upper() if carrier else "DHL", number, label)
+                _LOGGER.info("IMAP: Sendung erkannt: %s (Label: %s)", number, label)
                 await self._hass.services.async_call(
                     DOMAIN, "add_tracking",
                     {"tracking_number": number, "label": label},
