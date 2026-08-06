@@ -120,6 +120,42 @@ def _async_register_card(hass) -> None:
         hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _register)
 
 
+async def _async_send_notification(
+    hass: HomeAssistant, target: str, title: str, message: str
+) -> None:
+    """Benachrichtigung senden - unterstuetzt sowohl die neue Notify-Entity
+    (notify.send_message mit target, seit HA 2026.5) als auch den alten
+    dienstbasierten Aufruf (notify.mobile_app_xxx) fuer Geraete/Setups,
+    die noch nicht migriert sind."""
+    target = (target or "").strip()
+    if not target:
+        return
+    domain, _, _rest = target.partition(".")
+    try:
+        if domain == "notify" and hass.states.get(target) is not None:
+            # Neue Notify-Entity
+            await hass.services.async_call(
+                "notify",
+                "send_message",
+                {"title": title, "message": message},
+                target={"entity_id": target},
+                blocking=False,
+            )
+        else:
+            # Alter dienstbasierter Aufruf (Fallback fuer nicht migrierte Geraete)
+            svc_domain, svc_name = (
+                target.split(".", 1) if "." in target else (target, target)
+            )
+            await hass.services.async_call(
+                svc_domain,
+                svc_name,
+                {"title": title, "message": message},
+                blocking=False,
+            )
+    except Exception as err:
+        _LOGGER.warning("Benachrichtigung an '%s' fehlgeschlagen: %s", target, err)
+
+
 def _async_start_reminder(hass: HomeAssistant, entry: ConfigEntry) -> None:
     if not entry.options.get(CONF_REMINDER_ENABLED, True):
         return
@@ -137,18 +173,15 @@ def _async_start_reminder(hass: HomeAssistant, entry: ConfigEntry) -> None:
         labels = ", ".join(p.get("label", k) for k, p in list(pending.items())[:3])
         if count > 3:
             labels += f" und {count - 3} weitere"
-        svc_domain, svc_name = (target.split(".", 1) if "." in target else (target, target))
-        await hass.services.async_call(
-            svc_domain, svc_name,
-            {
-                "title": f"DHL Archiv: {count} Sendung(en) loeschbereit",
-                "message": (
-                    f"{labels} {'ist' if count == 1 else 'sind'} "
-                    f"seit mehr als {days} Tagen im Archiv. "
-                    "Bitte in der DHL-Karte bestaetigen."
-                ),
-            },
-            blocking=False,
+        await _async_send_notification(
+            hass,
+            target,
+            f"DHL Archiv: {count} Sendung(en) loeschbereit",
+            (
+                f"{labels} {'ist' if count == 1 else 'sind'} "
+                f"seit mehr als {days} Tagen im Archiv. "
+                "Bitte in der DHL-Karte bestaetigen."
+            ),
         )
         await archive.async_set_reminded()
 
