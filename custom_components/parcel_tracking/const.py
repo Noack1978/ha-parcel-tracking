@@ -127,7 +127,7 @@ DEFAULT_ICON = "mdi:package-variant-closed"
 # Archiv
 CONF_ARCHIVE_DAYS     = "archive_days"
 CONF_REMINDER_ENABLED = "reminder_enabled"
-CONF_NOTIFY_TARGET    = "notify_target"
+CONF_NOTIFY_TARGETS   = "notify_targets"
 DEFAULT_ARCHIVE_DAYS  = 30
 ARCHIVE_KEY = f"{DOMAIN}_archive"
 

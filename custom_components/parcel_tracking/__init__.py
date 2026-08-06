@@ -35,7 +35,7 @@ from homeassistant.helpers.storage import Store
 from .const import (
     ARCHIVE_KEY,
     CONF_ARCHIVE_DAYS,
-    CONF_NOTIFY_TARGET,
+    CONF_NOTIFY_TARGETS,
     CONF_REMINDER_ENABLED,
     DEFAULT_ARCHIVE_DAYS,
 )
@@ -165,24 +165,25 @@ def _async_start_reminder(hass: HomeAssistant, entry: ConfigEntry) -> None:
         if not archive:
             return
         days    = entry.options.get(CONF_ARCHIVE_DAYS, DEFAULT_ARCHIVE_DAYS)
-        target  = entry.options.get(CONF_NOTIFY_TARGET, "")
+        targets = entry.options.get(CONF_NOTIFY_TARGETS, [])
         pending = archive.get_pending(days)
-        if not pending or archive.reminded_today() or not target:
+        if not pending or archive.reminded_today() or not targets:
             return
         count  = len(pending)
         labels = ", ".join(p.get("label", k) for k, p in list(pending.items())[:3])
         if count > 3:
             labels += f" und {count - 3} weitere"
-        await _async_send_notification(
-            hass,
-            target,
-            f"DHL Archiv: {count} Sendung(en) loeschbereit",
-            (
-                f"{labels} {'ist' if count == 1 else 'sind'} "
-                f"seit mehr als {days} Tagen im Archiv. "
-                "Bitte in der DHL-Karte bestaetigen."
-            ),
-        )
+        for target in (targets if isinstance(targets, list) else [targets]):
+            await _async_send_notification(
+                hass,
+                target,
+                f"Paket-Archiv: {count} Sendung(en) loeschbereit",
+                (
+                    f"{labels} {'ist' if count == 1 else 'sind'} "
+                    f"seit mehr als {days} Tagen im Archiv. "
+                    "Bitte in der Paket-Karte bestaetigen."
+                ),
+            )
         await archive.async_set_reminded()
 
     unsub = async_track_time_interval(hass, _check, timedelta(hours=1))

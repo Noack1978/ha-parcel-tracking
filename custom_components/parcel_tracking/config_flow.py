@@ -12,11 +12,11 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.core import callback
 from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig, SelectSelectorMode
+from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig, SelectSelectorMode, EntitySelector, EntitySelectorConfig
 
 from .const import (
     CONF_ARCHIVE_DAYS,
-    CONF_NOTIFY_TARGET,
+    CONF_NOTIFY_TARGETS,
     CONF_REMINDER_ENABLED,
     DEFAULT_ARCHIVE_DAYS,
     API_TIMEOUT,
@@ -177,7 +177,7 @@ class DhlTrackingOptionsFlow(OptionsFlow):
         self._imap_interval     = int(opts.get(CONF_IMAP_SCAN_INTERVAL, DEFAULT_IMAP_SCAN_INTERVAL))
         self._archive_days      = int(opts.get(CONF_ARCHIVE_DAYS, DEFAULT_ARCHIVE_DAYS))
         self._reminder_enabled  = opts.get(CONF_REMINDER_ENABLED, True)
-        self._notify_target     = opts.get(CONF_NOTIFY_TARGET, "")
+        self._notify_targets    = opts.get(CONF_NOTIFY_TARGETS, [])
 
     async def async_step_init(self, user_input=None) -> ConfigFlowResult:
         return await self.async_step_menu()
@@ -292,7 +292,7 @@ class DhlTrackingOptionsFlow(OptionsFlow):
                 self._update_interval    = interval
                 self._archive_days       = int(user_input.get(CONF_ARCHIVE_DAYS, DEFAULT_ARCHIVE_DAYS))
                 self._reminder_enabled   = user_input.get(CONF_REMINDER_ENABLED, True)
-                self._notify_target      = user_input.get(CONF_NOTIFY_TARGET, "").strip()
+                self._notify_targets     = user_input.get(CONF_NOTIFY_TARGETS, [])
                 return self._save()
         return self.async_show_form(
             step_id="settings",
@@ -304,7 +304,9 @@ class DhlTrackingOptionsFlow(OptionsFlow):
                     vol.Coerce(int), vol.Range(min=1, max=365)
                 ),
                 vol.Optional(CONF_REMINDER_ENABLED, default=self._reminder_enabled): bool,
-                vol.Optional(CONF_NOTIFY_TARGET, default=self._notify_target): str,
+                vol.Optional(CONF_NOTIFY_TARGETS, default=self._notify_targets): EntitySelector(
+                    EntitySelectorConfig(domain="notify", multiple=True)
+                ),
             }),
             errors=errors,
         )
@@ -326,5 +328,5 @@ class DhlTrackingOptionsFlow(OptionsFlow):
             CONF_IMAP_SCAN_INTERVAL: self._imap_interval,
             CONF_ARCHIVE_DAYS:        self._archive_days,
             CONF_REMINDER_ENABLED:    self._reminder_enabled,
-            CONF_NOTIFY_TARGET:       self._notify_target,
+            CONF_NOTIFY_TARGETS:      self._notify_targets,
         })

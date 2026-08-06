@@ -92,12 +92,12 @@
           "update_interval": "Aktualisierungsintervall (Sekunden)",
           "archive_days": "Archiv: Aufbewahrungsdauer (Tage)",
           "reminder_enabled": "Archiv: Taeglich erinnern wenn Loeschung ausstehend",
-          "notify_target": "Archiv: Benachrichtigungsdienst (z. B. notify.mobile_app_xy)"
+          "notify_targets": "Notify-Ziele fuer Benachrichtigung"
         },
         "data_description": {
           "archive_days": "Nach wie vielen Tagen sollen archivierte Sendungen zur Loeschung vorgeschlagen werden",
           "reminder_enabled": "Einmal taeglich benachrichtigen wenn Sendungen auf Loeschbestaetigung warten",
-          "notify_target": "z. B. notify.mobile_app_mein_handy – leer lassen fuer keine Benachrichtigung"
+          "notify_targets": "Ein oder mehrere Notify-Entities (z. B. notify.<geraet>). Seit HA 2026.5 stellt die mobile_app-Integration Notify-Entities statt fester Dienste bereit."
         }
       }
     },
