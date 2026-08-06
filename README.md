@@ -40,7 +40,9 @@ triggers:
   - trigger: event
     event_type: parcel_tracking_status_changed
 actions:
-  - action: notify.mobile_app_mein_handy
+  - action: notify.send_message
+    target:
+      entity_id: notify.mein_handy   # Notify-Entity, seit HA 2026.5
     data:
       title: Paket
       message: >
@@ -52,6 +54,13 @@ actions:
 mode: parallel
 max: 10
 ```
+
+## Changelog
+
+### v1.1.0-beta.1
+- 🔄 Kompatibilität mit neuen HA-Notify-Entities (seit HA 2026.5 ersetzt `mobile_app` bei manchen Geräten den festen Dienst `notify.mobile_app_xxx` durch eine Notify-Entity `notify.<gerät>`)
+- Archiv-Erinnerung erkennt automatisch, ob das konfigurierte Notify-Ziel eine Entity oder ein klassischer Dienst ist
+- Beispiel-Automation in der README auf `notify.send_message` aktualisiert
 
 ## Lizenz
 
